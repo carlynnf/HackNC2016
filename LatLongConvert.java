@@ -1,5 +1,5 @@
 public class LatLongConvert {
-	
+	//perform test
     public final static double AVERAGE_RADIUS_OF_EARTH = 6371000;
 	
     public static double[] calculateDistance(Double[] coordinate) {
@@ -23,4 +23,4 @@ public class LatLongConvert {
 		double[] arr =calculateDistance(new Double[]{Double.parseDouble(args[0]), Double.parseDouble(args[1])});
 		System.out.println(arr[0]+ " " + arr[1]);
 	}
-}
+} 
