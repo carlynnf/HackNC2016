@@ -38,6 +38,8 @@ import com.esri.core.tasks.geocode.LocatorFindParameters;
 import com.esri.core.tasks.geocode.LocatorGeocodeResult;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.io.FileNotFoundException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -61,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     EditText mSearchEditText;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) throws FileNotFoundException {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -81,24 +83,13 @@ public class MainActivity extends AppCompatActivity {
         PictureMarkerSymbol pictureMarker = new PictureMarkerSymbol(ResourcesCompat.getDrawable(getResources(), R.drawable.candy, null));
 
         // create a point at x=-302557, y=7570663 (for a map using meters as units; this depends  // on the spatial reference)
-        Point pointGeometry3 = new Point(-302557, 7570663); //uk
-        Point pointGeometry4 = new Point(5051950.5, 3696630.3);
-        Point pointGeometry5 = GeometryEngine.project(35.905208, -79.050381, mMapView.getSpatialReference());
-        Point pointGeometry6 = new Point(-8800517.6, 3970832.0);
-
-
-        // create a graphic with the geometry and marker symbol
-        Graphic pointGraphic3 = new Graphic(pointGeometry3, simpleMarker);
-        Graphic pointGraphic4 = new Graphic(pointGeometry4, simpleMarker);
-        Graphic pointGraphic5 = new Graphic(pointGeometry5, simpleMarker);
-        Graphic pointGraphic6 = new Graphic(pointGeometry6, simpleMarker);
-
-
-        // add the graphic to the graphics layer
-        mLocationLayer.addGraphic(pointGraphic3);
-        mLocationLayer.addGraphic(pointGraphic4);
-        mLocationLayer.addGraphic(pointGraphic5);
-        mLocationLayer.addGraphic(pointGraphic6);
+        LoadData.setData();
+        List<Double[]> coordinates = LoadData.getCoordinates();
+        for(Double[] coordinate : coordinates) {
+            Point pointGeometry = new Point(coordinate[1], coordinate[0]);
+            Graphic pointGraphic = new Graphic(pointGeometry, simpleMarker);
+            mLocationLayer.addGraphic(pointGraphic);
+        }
 
         mMapView.addLayer(mLocationLayer);
 

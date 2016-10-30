@@ -4,7 +4,7 @@ import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
 
-class LoadData {
+public class LoadData {
 
     private static File obj = new File("dataFile/data.csv");
     private static List<Double[]> coordinates = new ArrayList<>();
