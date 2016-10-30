@@ -7,22 +7,20 @@ import java.util.ArrayList;
 class LoadData {
 
     private static File obj = new File("dataFile/data.csv");
-    private static List<Double[]> coordinates;
-    private static List<String> names;
-    private static List<Integer> numOfHarassments;
-    private static List<String[]> harassments;
+    private static List<Double[]> coordinates = new ArrayList<>();
+    private static List<String> names = new ArrayList<>();
+    private static List<Integer> numOfHarassments = new ArrayList<>();
+    private static List<String[]> harassments = new ArrayList<>();
+    private static List<String> addresses = new ArrayList<>();
 
     public static void setData() throws FileNotFoundException {
         Scanner sc = new Scanner(obj);
-        coordinates = new ArrayList<>();
-        names = new ArrayList<>();
-        numOfHarassments = new ArrayList<>();
-        harassments = new ArrayList<>();
         sc.nextLine();
         while (sc.hasNextLine()) {
             String tmp = sc.nextLine();
             String[] tmpArr = tmp.split(",");
             names.add(tmpArr[0]);
+            addresses.add(tmpArr[1]);
             numOfHarassments.add(Integer.parseInt(tmpArr[2]));
             harassments.add(tmpArr[3].split(";"));
             coordinates.add(new Double[]{Double.parseDouble(tmpArr[4]), Double.parseDouble(tmpArr[5])});
@@ -46,12 +44,17 @@ class LoadData {
         return harassments;
     }
 
-    public static void putLocation(String name, String categoryOfOffences, double latitude, double longitude) {
+    public static List<String> getAddresses() {
+        return addresses;
+    }
+
+    public static void putLocation(String name, String address, String categoryOfOffences,  double latitude, double longitude) {
         int tmp = positonInDataSet(latitude, longitude);
         if (tmp != -1) {
             numOfHarassments.set(tmp, numOfHarassments.get(tmp) + 1);
         } else {
             names.add(name);
+            addresses.add(address);
             numOfHarassments.add(1);
             harassments.add(categoryOfOffences.split(";"));
             coordinates.add(new Double[]{latitude, longitude});
