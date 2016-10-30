@@ -8,4 +8,5 @@
     <string name="address_search">Searching for Address</string>
     <string name="addressSearchFailed">Address search failed</string>
     <string name="noResultsFound">No results found</string>
+    <string name="data">http://services7.arcgis.com/C1lwDpDbhFGgn5RK/arcgis/rest/services/data/FeatureServer/0</string>
 </resources>

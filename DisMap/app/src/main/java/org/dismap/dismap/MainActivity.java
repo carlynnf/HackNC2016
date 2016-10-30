@@ -1,5 +1,6 @@
 package org.dismap.dismap;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -21,13 +22,18 @@ import android.widget.Toast;
 import com.esri.android.map.Callout;
 import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
+import com.esri.android.map.Layer;
 import com.esri.android.map.MapView;
+import com.esri.android.map.ags.ArcGISFeatureLayer;
+import com.esri.android.map.ags.ArcGISTiledMapServiceLayer;
 import com.esri.android.map.event.OnSingleTapListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Point;
+import com.esri.core.map.Feature;
+import com.esri.core.map.FeatureResult;
 import com.esri.core.map.Graphic;
 import com.esri.core.renderer.ClassBreaksRenderer;
 import com.esri.core.symbol.PictureMarkerSymbol;
@@ -36,6 +42,8 @@ import com.esri.core.symbol.TextSymbol;
 import com.esri.core.tasks.geocode.Locator;
 import com.esri.core.tasks.geocode.LocatorFindParameters;
 import com.esri.core.tasks.geocode.LocatorGeocodeResult;
+import com.esri.core.tasks.query.QueryParameters;
+import com.esri.core.tasks.query.QueryTask;
 
 import java.util.List;
 
@@ -50,11 +58,13 @@ public class MainActivity extends AppCompatActivity {
     Boolean mIsMapLoaded;
 
     //For popup
-    GeodatabaseFeatureServiceTable table;
-    FeatureLayer feature_layer;
-    ClassBreaksRenderer wind_renderer;
-    static int LAYER_ID = 0;
-    View calloutView;
+    View globalCalloutView;
+    private Graphic mIdentifiedGraphic;
+    private ArcGISFeatureLayer mFeatureLayer;
+    GraphicsLayer mGraphicsLayer;
+    private String mFeatureServiceURL;
+    Callout mapCallout;
+    ProgressDialog progress;
 
 
     //Variables needed for search
@@ -71,9 +81,10 @@ public class MainActivity extends AppCompatActivity {
         mMapView = (MapView)findViewById(R.id.map);
         mLocationLayer = new GraphicsLayer();
         mIsMapLoaded = false;
+        mMapView.enableWrapAround(true);
 
         //Instantiating variables for popup
-        calloutView = View.inflate(this, R.layout.marker_popup_layout, null);
+        globalCalloutView = View.inflate(this, R.layout.marker_popup_layout, null);
 
 
         // create a point marker symbol (red, size 10, of type circle)
@@ -87,20 +98,15 @@ public class MainActivity extends AppCompatActivity {
         Point pointGeometry6 = new Point(-8800517.6, 3970832.0);
 
 
-        // create a graphic with the geometry and marker symbol
-        Graphic pointGraphic3 = new Graphic(pointGeometry3, simpleMarker);
-        Graphic pointGraphic4 = new Graphic(pointGeometry4, simpleMarker);
-        Graphic pointGraphic5 = new Graphic(pointGeometry5, simpleMarker);
-        Graphic pointGraphic6 = new Graphic(pointGeometry6, simpleMarker);
-
-
-        // add the graphic to the graphics layer
-        mLocationLayer.addGraphic(pointGraphic3);
-        mLocationLayer.addGraphic(pointGraphic4);
-        mLocationLayer.addGraphic(pointGraphic5);
-        mLocationLayer.addGraphic(pointGraphic6);
-
-        mMapView.addLayer(mLocationLayer);
+        // Get the feature service URL from values->strings.xml
+        mFeatureServiceURL = this.getResources().getString(R.string.data);
+        // Add Feature layer to the MapView
+        mFeatureLayer = new ArcGISFeatureLayer(mFeatureServiceURL, ArcGISFeatureLayer.MODE.ONDEMAND);
+        mMapView.addLayer(mFeatureLayer);
+        // Add Graphics layer to the MapView
+        mGraphicsLayer = new GraphicsLayer();
+        mMapView.addLayer(mGraphicsLayer);
+        new QueryFeatureLayer().execute();
 
         //Setting an onStatuser listener for the map
         mMapView.setOnStatusChangedListener(new OnStatusChangedListener() {
@@ -117,24 +123,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSingleTap(final float x, final float y) {
 
-//                if (x == 1 && y == 1) {
-
-
-                    // Update the content of the callout
-//                    updateContent(station_name, country_name, temp, wind_speed);
-                    // Create callout from mapview
-                    Callout mapCallout = mMapView.getCallout();
-                    // populate callout with updated content
-                    Point p = new Point(x, y);
-                Point mapPoint = mMapView.toMapPoint(x, y);
-                mapCallout.setCoordinates(mapPoint);
-                    mapCallout.setOffset(0,  -3);
-                    mapCallout.setContent(calloutView);
-                    // show callout
-                    mapCallout.show();
-
+                if (mIsMapLoaded) {
+                    // If map is initialized and Single tap is registered on screen
+                    // identify the location selected
+                    identifyLocation(x, y);
                 }
-//            }
+                }
 
         });
 
@@ -146,6 +140,130 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    /**
+     * Takes in the screen location of the point to identify the feature on map.
+     *
+     * @param x
+     *          x co-ordinate of point
+     * @param y
+     *          y co-ordinate of point
+     */
+    void identifyLocation(float x, float y) {
+
+        // Hide the callout, if the callout from previous tap is still showing
+        // on map
+        if (mapCallout.isShowing()) {
+            mapCallout.hide();
+        }
+
+        // Find out if the user tapped on a feature
+        SearchForFeature(x, y);
+
+        // If the user tapped on a feature, then display information regarding
+        // the feature in the callout
+        if (mIdentifiedGraphic != null) {
+            Point mapPoint = mMapView.toMapPoint(x, y);
+            // Show Callout
+            ShowCallout(mapCallout, mIdentifiedGraphic, mapPoint);
+        }
+    }
+
+    /**
+     * Sets the value of mIdentifiedGraphic to the Graphic present on the
+     * location of screen tap
+     *
+     * @param x
+     *          x co-ordinate of point
+     * @param y
+     *          y co-ordinate of point
+     */
+    private void SearchForFeature(float x, float y) {
+
+        Point mapPoint = mMapView.toMapPoint(x, y);
+
+        if (mapPoint != null) {
+
+            for (Layer layer : mMapView.getLayers()) {
+                if (layer == null)
+                    continue;
+
+                if (layer instanceof ArcGISFeatureLayer) {
+                    ArcGISFeatureLayer fLayer = (ArcGISFeatureLayer) layer;
+                    // Get the Graphic at location x,y
+                    mIdentifiedGraphic = GetFeature(fLayer, x, y);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the Graphic present the location of screen tap
+     *
+     * @param fLayer
+     *          ArcGISFeatureLayer to get graphics ids
+     * @param x
+     *          x co-ordinate of point
+     * @param y
+     *          y co-ordinate of point
+     * @return Graphic at location x,y
+     */
+    private Graphic GetFeature(ArcGISFeatureLayer fLayer, float x, float y) {
+
+        // Get the graphics near the Point.
+        int[] ids = fLayer.getGraphicIDs(x, y, 10, 1);
+        if (ids == null || ids.length == 0) {
+            return null;
+        }
+        return fLayer.getGraphic(ids[0]);
+    }
+
+    /**
+     * Shows the Attribute values for the Graphic in the Callout
+     *
+     * @param calloutView a callout to show
+     * @param graphic selected graphic
+     * @param mapPoint point to show callout on map
+     */
+    private void ShowCallout(Callout calloutView, Graphic graphic, Point mapPoint) {
+
+        // Create callout from mapview
+        mapCallout = mMapView.getCallout();
+        mapCallout.setCoordinates(mapPoint);
+        mapCallout.setOffset(0, -3);
+        mapCallout.setContent(globalCalloutView);
+        // show callout
+        mapCallout.show();
+
+        /*// Get the values of attributes for the Graphic
+        String cityName = (String) graphic.getAttributeValue("NAME");
+        String countryName = (String) graphic.getAttributeValue("COUNTRY");
+        String cityPopulationValue = graphic.getAttributeValue("POPULATION").toString();
+
+        // Set callout properties
+        calloutView.setCoordinates(mapPoint);
+        calloutView.setStyle(mCalloutStyle);
+        calloutView.setMaxWidth(325);
+
+        // Compose the string to display the results
+        StringBuilder cityCountryName = new StringBuilder();
+        cityCountryName.append(cityName);
+        cityCountryName.append(", ");
+        cityCountryName.append(countryName);
+
+        TextView calloutTextLine1 = (TextView) findViewById(R.id.citycountry);
+        calloutTextLine1.setText(cityCountryName);
+
+        // Compose the string to display the results
+        StringBuilder cityPopulation = new StringBuilder();
+        cityPopulation.append("Population: ");
+        cityPopulation.append(cityPopulationValue);
+
+        TextView calloutTextLine2 = (TextView) findViewById(R.id.population);
+        calloutTextLine2.setText(cityPopulation);
+        calloutView.setContent(mCalloutContent);
+        calloutView.show();*/
     }
 
     public void onSearchButtonClicked(View view){
@@ -271,4 +389,74 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * Run the query task on the feature layer and put the result on the map.
+     */
+    private class QueryFeatureLayer extends AsyncTask<Void, Void, FeatureResult> {
+
+        // default constructor
+        public QueryFeatureLayer() {
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progress = ProgressDialog.show(MainActivity.this, "", "Please wait....query task is executing");
+        }
+
+        @Override
+        protected FeatureResult doInBackground(Void... v) {
+
+            // Define a new query and set parameters
+            QueryParameters mParams = new QueryParameters();
+            mParams.setReturnGeometry(true);
+
+            // Define the new instance of QueryTask
+            QueryTask queryTask = new QueryTask(mFeatureServiceURL);
+            FeatureResult results;
+
+            try {
+                // run the querytask
+                results = queryTask.execute(mParams);
+                return results;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(FeatureResult results) {
+
+            // Remove the result from previously run query task
+            mGraphicsLayer.removeAll();
+
+            // Define a new marker symbol for the result graphics
+            SimpleMarkerSymbol sms = new SimpleMarkerSymbol(Color.BLUE, 10, SimpleMarkerSymbol.STYLE.CIRCLE);
+
+            // Envelope to focus on the map extent on the results
+            Envelope extent = new Envelope();
+
+            // iterate through results
+            for (Object element : results) {
+                // if object is feature cast to feature
+                if (element instanceof Feature) {
+                    Feature feature = (Feature) element;
+                    // convert feature to graphic
+                    Graphic graphic = new Graphic(feature.getGeometry(), sms, feature.getAttributes());
+                    // merge extent with point
+                    extent.merge((Point)graphic.getGeometry());
+                    // add it to the layer
+                    mGraphicsLayer.addGraphic(graphic);
+                }
+            }
+
+            // Set the map extent to the envelope containing the result graphics
+            mMapView.setExtent(extent, 100);
+            // Disable the progress dialog
+            progress.dismiss();
+
+        }
+    }
+
 }
