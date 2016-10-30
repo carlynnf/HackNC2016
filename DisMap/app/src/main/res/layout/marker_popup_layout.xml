@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="Name of Business"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/nobTV" />
+
+    <TextView
+        android:text="420 Georgia Tech Station, Atlanta, Ga 30332"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/addressTV" />
+
+
+    <TextView
+        android:text="Number of Ratings: 3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/norTV" />
+
+    <TextView
+        android:text="Racial || Sexist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/categoriesTV" />
+</LinearLayout>
