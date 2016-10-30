@@ -65,7 +65,7 @@ class LoadData {
         int size = coordinates.size();
         for (int i = 0; i < size; i++) {
             Double[] arr = coordinates.get(i);
-            if (Math.abs(arr[0] - latitude) <= 0.00015 && Math.abs(arr[1] - longitude) <= 0.00015) {
+            if (Math.abs(arr[0] - latitude) <= 15 && Math.abs(arr[1] - longitude) <= 15) {
                 return i;
             }
         }

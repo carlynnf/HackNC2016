@@ -1,10 +1,10 @@
-Name,Address,Number,Category of Reports,Latitude,Longitude
-Waffle House,3703 New Bern Ave Raleigh NC 27610,1,Sexual harassment,35.798231,-78.576799
-The Library,20 E Franklin St Chapel Hill NC,2,Racism;Sexism,35.913278,-79.055536
-Domino's Pizza,1601 E NC Highway 54 Durham NC 27713,1,Sexism,35.903046,-78.906259
-Barclay Villa,104 Pope Lake Road Angier NC 27501,1,Homophobia,35.469246,-78.691327
-Opra House Saloon,132 Sunset Ave Asheboro NC,1,Sexual harassment,35.706006,-79.815015
-Ruby Tuesday,210 NC-54 Durham NC 27713,1,Racism,35.911458,-78.938479
-Colonial Village at Woodlake,1000 Lydias Way Durham NC 27713,1,Physical harassment,35.91718,-78.925314
-Weed Man,6001 Resco Ct Raleigh NC 27617,1,Sexism,35.89628,-78.756384
-Legends,330 W Hargett St Raleigh NC 27601,1,Sexism,35.778615,-78.644957
+Name,Address,Number,Category of Reports,Latitude (m),Longitude (m)
+Waffle House,3703 New Bern Ave Raleigh NC 27610,1,Sexual harassment,3958111.5,-8747224.3
+The Library,20 E Franklin St Chapel Hill NC,2,Racism;Sexism,3970832,-8800517.6
+Domino's Pizza,1601 E NC Highway 54 Durham NC 27713,1,Sexism,3969700.6,-8783900
+Barclay Villa,104 Pope Lake Road Angier NC 27501,1,Homophobia,3921736.6,-8759973.6
+Opra House Saloon,132 Sunset Ave Asheboro NC,1,Sexual harassment,3947914.5,-8885063.3
+Ruby Tuesday,210 NC-54 Durham NC 27713,1,Racism,3970630.7,-8787486.7
+Colonial Village at Woodlake,1000 Lydias Way Durham NC 27713,1,Physical harassment,3971263.4,-8786021.2
+Weed Man,6001 Resco Ct Raleigh NC 27617,1,Sexism,3968952.5,-8767215.8
+Legends,330 W Hargett St Raleigh NC 27601,1,Sexism,3955942.6,-8754811.7
